@@ -1,0 +1,15 @@
+language: python
+python:
+  - "2.7"
+install:
+    - pip install coveralls
+    - pip install yapf==0.6.2
+script:
+    # Run unit tests and calculate code coverage.
+    - coverage run --source bigsanity -m unittest discover
+    # Check that source has correct formatting.
+    - yapf --diff --recursive --style google ./
+after_success:
+    coveralls
+
+sudo: false
