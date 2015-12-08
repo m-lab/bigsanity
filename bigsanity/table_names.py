@@ -131,6 +131,8 @@ def _monthly_tables_with_name_func(time_range_start, time_range_end,
     # very close to the month border.
     current_time = max(MIN_TABLE_MONTH, time_range_start - day_delta)
     time_limit = min(MAX_TABLE_MONTH, time_range_end + day_delta)
+    # Keep incrementing current_time by 1 day until we reach the end of the
+    # range. This is not optimal for efficiency, but it is simple.
     while current_time < time_limit:
         table_name = table_name_func(current_time)
         tables.add(table_name)
