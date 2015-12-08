@@ -120,11 +120,10 @@ def _monthly_tables_with_name_func(time_range_start, time_range_end,
     MIN_TABLE_MONTH = datetime.datetime.fromtimestamp(constants.MLAB_EPOCH)
     MAX_TABLE_MONTH = datetime.datetime.now()
     if not (MIN_TABLE_MONTH <= time_range_start <= MAX_TABLE_MONTH):
-        raise ValueError('time_range_start (%s) is out of range' % (
-            time_range_start))
+        raise ValueError('time_range_start (%s) is out of range' %
+                         time_range_start)
     if not (MIN_TABLE_MONTH <= time_range_end <= MAX_TABLE_MONTH):
-        raise ValueError('time_range_end (%s) is out of range' % (
-            time_range_end))
+        raise ValueError('time_range_end (%s) is out of range' % time_range_end)
     day_delta = relativedelta.relativedelta(days=1)
     tables = set()
     # We add adjacent days here because a bug in BigQuery causes a handful of
