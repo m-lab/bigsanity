@@ -23,7 +23,7 @@ import constants
 def monthly_tables(time_range_start, time_range_end):
     """Returns the names of all monthly tables covering a time range.
 
-    Returns the names of all the M-Lab BigQuery montly tables that contain test
+    Returns the names of all the M-Lab BigQuery monthly tables that contain test
     data within the given time range.
 
     Note: Tests that occur near the border of a month (e.g. midnight on the
