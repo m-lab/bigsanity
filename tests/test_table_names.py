@@ -58,32 +58,17 @@ class TableNamesTest(unittest.TestCase):
                 datetime.datetime.now() + datetime.timedelta(days=1))
 
     def test_monthly_tables(self):
-        """Generate monthly table names for valid date range."""
-        self.assertSequenceEqual(
-            ('plx.google:m_lab.2009_02_fast.all',
-             'plx.google:m_lab.2009_03_fast.all'), table_names.monthly_tables(
-                 datetime.datetime(2009, 2, 11), datetime.datetime(2009, 3, 1)))
-
-        # Including the 1-day buffer, 2012-01-01 spills over into the previous
-        # month's table.
-        self.assertSequenceEqual(
-            ('plx.google:m_lab.2011_12_fast.all',
-             'plx.google:m_lab.2012_01_fast.all',
-             'plx.google:m_lab.2012_02_fast.all'), table_names.monthly_tables(
-                 datetime.datetime(2012, 1, 1), datetime.datetime(2012, 2, 1)))
-
-    def test_legacy_monthly_tables(self):
         """Generate legacy monthly table names for valid date range."""
         self.assertSequenceEqual(
             ('plx.google:m_lab.2009_02.all',
-             'plx.google:m_lab.2009_03.all'), table_names.legacy_monthly_tables(
+             'plx.google:m_lab.2009_03.all'), table_names.monthly_tables(
                  datetime.datetime(2009, 2, 11), datetime.datetime(2009, 3, 1)))
 
         # Including the 1-day buffer, 2012-01-01 spills over into the previous
         # month's table.
         self.assertSequenceEqual(
             ('plx.google:m_lab.2011_12.all', 'plx.google:m_lab.2012_01.all',
-             'plx.google:m_lab.2012_02.all'), table_names.legacy_monthly_tables(
+             'plx.google:m_lab.2012_02.all'), table_names.monthly_tables(
                  datetime.datetime(2012, 1, 1), datetime.datetime(2012, 2, 1)))
 
 
