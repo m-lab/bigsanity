@@ -20,10 +20,10 @@ from dateutil import relativedelta
 import constants
 
 
-def legacy_monthly_tables(time_range_start, time_range_end):
-    """Returns the names of all legacy monthly tables covering a time range.
+def monthly_tables(time_range_start, time_range_end):
+    """Returns the names of all monthly tables covering a time range.
 
-    Returns the names of all the legacy M-Lab BigQuery tables that contain test
+    Returns the names of all the M-Lab BigQuery monthly tables that contain test
     data within the given time range.
 
     Note: Tests that occur near the border of a month (e.g. midnight on the
@@ -37,82 +37,6 @@ def legacy_monthly_tables(time_range_start, time_range_end):
     Returns:
         A list of M-Lab BigQuery tables corresponding to the given time range,
         e.g.:
-            ['plx.google:m_lab.2015_01.all',
-             'plx.google:m_lab.2015_02.all',
-             'plx.google:m_lab.2015_03.all']
-    """
-    return _monthly_tables_with_name_func(time_range_start, time_range_end,
-                                          legacy_monthly_table)
-
-
-def monthly_tables(time_range_start, time_range_end):
-    """Returns the names of all monthly tables covering a time range.
-
-    Returns the names of all the new (last snapshot) M-Lab BigQuery tables
-    that contain test data within the given time range.
-
-    Note: Tests that occur near the border of a month (e.g. midnight on the
-    first or last day of the month) may be placed in the adjacent month's table
-    so we add the adjacent table if the time range falls on a month boundary.
-
-    Args:
-        time_range_start: Start of time range (as datetime).
-        time_range_end: End of time range (as datetime).
-
-    Returns:
-        A list of M-Lab BigQuery tables corresponding to the given time range,
-        e.g.:
-            ['plx.google:m_lab.2015_01_fast.all',
-             'plx.google:m_lab.2015_02_fast.all',
-             'plx.google:m_lab.2015_03_fast.all']
-    """
-    return _monthly_tables_with_name_func(time_range_start, time_range_end,
-                                          monthly_table)
-
-
-def legacy_monthly_table(table_time):
-    """Translates a time into the corresponding legacy monthly table.
-
-    Args:
-        table_time: Datetime to map to an M-Lab BigQuery table name.
-
-    Returns:
-        Name of the table corresponding to the given time, e.g.
-        'plx.google:m_lab.2015_02.all',
-    """
-    table_month = table_time.strftime('%Y_%m')
-    return _format_table(table_month)
-
-
-def monthly_table(table_time):
-    """Translates a time into the corresponding new monthly table.
-
-    Args:
-        table_time: Datetime to map to an M-Lab BigQuery table name.
-
-    Returns:
-        Name of the table corresponding to the given time, e.g.
-        'plx.google:m_lab.2015_02_fast.all',
-    """
-    table_month = table_time.strftime('%Y_%m')
-    return _format_table(table_month + '_fast')
-
-
-def _monthly_tables_with_name_func(time_range_start, time_range_end,
-                                   table_name_func):
-    """Returns M-Lab tables within a given range according to a naming function.
-
-    Returns the names of all tables in a given time range using the given
-    function for generating table names.
-
-    Args:
-        time_range_start: Start of time range (as datetime).
-        time_range_end: End of time range (as datetime).
-        table_name_func: Function that converts a datetime to a table name.
-
-    Returns:
-        A list of M-Lab BigQuery tables corresponding to the given time range,
-        generated using the given naming function, e.g.:
             ['plx.google:m_lab.2015_01.all',
              'plx.google:m_lab.2015_02.all',
              'plx.google:m_lab.2015_03.all']
@@ -134,10 +58,24 @@ def _monthly_tables_with_name_func(time_range_start, time_range_end,
     # Keep incrementing current_time by 1 day until we reach the end of the
     # range. This is not optimal for efficiency, but it is simple.
     while current_time < time_limit:
-        table_name = table_name_func(current_time)
+        table_name = monthly_table(current_time)
         tables.add(table_name)
         current_time += day_delta
     return sorted(tables)
+
+
+def monthly_table(table_time):
+    """Translates a time into the corresponding monthly table.
+
+    Args:
+        table_time: Datetime to map to an M-Lab BigQuery table name.
+
+    Returns:
+        Name of the table corresponding to the given time, e.g.
+        'plx.google:m_lab.2015_02.all',
+    """
+    table_month = table_time.strftime('%Y_%m')
+    return _format_table(table_month)
 
 
 def per_project_table(project):

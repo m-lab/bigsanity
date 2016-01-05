@@ -89,17 +89,17 @@ class TableEquivalenceQueryGenerator(object):
         Returns:
             A tuple of BigQuery SQL query strings.
         """
-        return (self._generate_legacy_per_month_query(),
+        return (self._generate_per_month_query(),
                 self._generate_per_project_query())
 
-    def _generate_legacy_per_month_query(self):
+    def _generate_per_month_query(self):
         conditions = []
         conditions.append(_format_project_condition(self._project))
         if _project_has_intermediate_snapshots(self._project):
             conditions.append('web100_log_entry.is_last_entry = True')
         conditions.append(self._format_time_range_condition())
-        tables = table_names.legacy_monthly_tables(self._time_range_start,
-                                                   self._time_range_end)
+        tables = table_names.monthly_tables(self._time_range_start,
+                                            self._time_range_end)
         return _construct_equivalence_query(tables, conditions)
 
     def _generate_per_project_query(self):
