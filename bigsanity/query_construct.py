@@ -37,7 +37,7 @@ FROM
 WHERE
     {conditions}
 ORDER BY
-    test_id""".format(tables=',\n\t'.join(tables),
+    test_id""".format(tables=',\n    '.join(tables),
                       conditions='\n    AND '.join(conditions)).strip()
 
 
@@ -113,8 +113,8 @@ class TableEquivalenceQueryGenerator(object):
         end_time = _to_unix_timestamp(self._time_range_end)
         end_time_human = _to_human_readable_date(self._time_range_end)
         return (
-            '((web100_log_entry.log_time >= {start_time}) AND\t-- {start_time_human}'
-            '\n\t (web100_log_entry.log_time < {end_time}))\t-- {end_time_human}'
+            '((web100_log_entry.log_time >= {start_time}) AND  -- {start_time_human}'
+            '\n         (web100_log_entry.log_time < {end_time}))  -- {end_time_human}'
         ).format(start_time=start_time,
                  start_time_human=start_time_human,
                  end_time=end_time,
