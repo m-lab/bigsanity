@@ -38,28 +38,16 @@ def _split_and_normalize_query(query_string):
     return lines
 
 
-class QueryGeneratorTest(unittest.TestCase):
+class TableEquivalenceQueryGeneratorTest(unittest.TestCase):
+
+    def setUp(self):
+        self.maxDiff = None
 
     def assertQueriesEqual(self, expected, actual):
         expected_lines = _split_and_normalize_query(expected)
         actual_lines = _split_and_normalize_query(actual)
 
         self.assertSequenceEqual(expected_lines, actual_lines)
-
-    def assertQuerySetEqual(self, expected, actual):
-        if len(expected) != len(actual):
-            print '\n\nexpected: %s\n\nactual: %s' % ('\n'.join(expected),
-                                                      '\n'.join(actual))
-        self.assertEqual(len(expected), len(actual))
-        for i in range(len(expected)):
-            self.assertQueriesEqual(expected[i], actual[i])
-
-
-class TableEquivalenceQueryGeneratorTest(QueryGeneratorTest):
-
-    def _get_queries_actual(self, project, start_time, end_time):
-        return query_construct.TableEquivalenceQueryGenerator(
-            project, start_time, end_time).generate_queries()
 
     def test_correct_query_generation_for_ndt_full_month(self):
         """Queries on border of a month should spill into adjacent months.
@@ -68,39 +56,45 @@ class TableEquivalenceQueryGeneratorTest(QueryGeneratorTest):
         it should include tables from the adjacent months in the legacy
         per-month query.
         """
-        legacy_per_month_query_expected = """
+        query_expected = """
         SELECT
-            test_id
+            per_month.test_id,
+            per_project.test_id
         FROM
-            plx.google:m_lab.2009_02.all,
-            plx.google:m_lab.2009_03.all,
-            plx.google:m_lab.2009_04.all
-        WHERE
-            project = 0
-            AND web100_log_entry.is_last_entry = True
-            AND ((web100_log_entry.log_time >= 1235865600) AND  -- 2009-03-01
+          (
+            SELECT
+                test_id
+            FROM
+                plx.google:m_lab.2009_02.all,
+                plx.google:m_lab.2009_03.all,
+                plx.google:m_lab.2009_04.all
+            WHERE
+                project = 0
+                AND web100_log_entry.is_last_entry = True
+                AND ((web100_log_entry.log_time >= 1235865600) AND  -- 2009-03-01
+                     (web100_log_entry.log_time <  1238544000))     -- 2009-04-01
+          ) AS per_month
+        FULL OUTER JOIN EACH
+          (
+            SELECT
+                test_id
+            FROM
+                plx.google:m_lab.ndt.all
+            WHERE
+                ((web100_log_entry.log_time >= 1235865600) AND  -- 2009-03-01
                  (web100_log_entry.log_time <  1238544000))     -- 2009-04-01
-        ORDER BY
-            test_id"""
-
-        per_project_query_expected = """
-        SELECT
-            test_id
-        FROM
-            plx.google:m_lab.ndt.all
+          ) AS per_project
+        ON
+            per_month.test_id=per_project.test_id
         WHERE
-            ((web100_log_entry.log_time >= 1235865600) AND  -- 2009-03-01
-             (web100_log_entry.log_time <  1238544000))     -- 2009-04-01
-        ORDER BY
-            test_id"""
+            per_month.test_id IS NULL
+            OR per_project.test_id IS NULL"""
 
-        query_set_expected = (legacy_per_month_query_expected,
-                              per_project_query_expected)
         start_time = datetime.datetime(2009, 3, 1)
         end_time = datetime.datetime(2009, 4, 1)
-        query_set_actual = self._get_queries_actual(constants.PROJECT_ID_NDT,
-                                                    start_time, end_time)
-        self.assertQuerySetEqual(query_set_expected, query_set_actual)
+        query_actual = query_construct.TableEquivalenceQueryGenerator(
+            constants.PROJECT_ID_NDT, start_time, end_time).generate_query()
+        self.assertQueriesEqual(query_expected, query_actual)
 
     def test_correct_query_generation_for_ndt_across_months(self):
         """Queries not on border of months should not spill over.
@@ -109,38 +103,44 @@ class TableEquivalenceQueryGeneratorTest(QueryGeneratorTest):
         end of month should not include tables for the adjacent month in the
         legacy per month query, even when the time window spans multiple months.
         """
-        legacy_per_month_query_expected = """
+        query_expected = """
         SELECT
-            test_id
+            per_month.test_id,
+            per_project.test_id
         FROM
-            plx.google:m_lab.2009_03.all,
-            plx.google:m_lab.2009_04.all
-        WHERE
-            project = 0
-            AND web100_log_entry.is_last_entry = True
-            AND ((web100_log_entry.log_time >= 1237075200) AND  -- 2009-03-15
+          (
+            SELECT
+                test_id
+            FROM
+                plx.google:m_lab.2009_03.all,
+                plx.google:m_lab.2009_04.all
+            WHERE
+                project = 0
+                AND web100_log_entry.is_last_entry = True
+                AND ((web100_log_entry.log_time >= 1237075200) AND  -- 2009-03-15
+                     (web100_log_entry.log_time <  1239753600))     -- 2009-04-15
+          ) AS per_month
+        FULL OUTER JOIN EACH
+          (
+            SELECT
+                test_id
+            FROM
+                plx.google:m_lab.ndt.all
+            WHERE
+                ((web100_log_entry.log_time >= 1237075200) AND  -- 2009-03-15
                  (web100_log_entry.log_time <  1239753600))     -- 2009-04-15
-        ORDER BY
-            test_id"""
-
-        per_project_query_expected = """
-        SELECT
-            test_id
-        FROM
-            plx.google:m_lab.ndt.all
+          ) AS per_project
+        ON
+            per_month.test_id=per_project.test_id
         WHERE
-            ((web100_log_entry.log_time >= 1237075200) AND  -- 2009-03-15
-             (web100_log_entry.log_time <  1239753600))     -- 2009-04-15
-        ORDER BY
-            test_id"""
+            per_month.test_id IS NULL
+            OR per_project.test_id IS NULL"""
 
-        query_set_expected = (legacy_per_month_query_expected,
-                              per_project_query_expected)
         start_time = datetime.datetime(2009, 3, 15)
         end_time = datetime.datetime(2009, 4, 15)
-        query_set_actual = self._get_queries_actual(constants.PROJECT_ID_NDT,
-                                                    start_time, end_time)
-        self.assertQuerySetEqual(query_set_expected, query_set_actual)
+        query_actual = query_construct.TableEquivalenceQueryGenerator(
+            constants.PROJECT_ID_NDT, start_time, end_time).generate_query()
+        self.assertQueriesEqual(query_expected, query_actual)
 
     def test_correct_query_generation_for_ndt_within_single_month(self):
         """Queries not on border of months should not spill over.
@@ -149,138 +149,166 @@ class TableEquivalenceQueryGeneratorTest(QueryGeneratorTest):
         within one day of the month boundary, we should not query any adjacent
         month in the legacy per month query.
         """
-        legacy_per_month_query_expected = """
+        query_expected = """
         SELECT
-            test_id
+            per_month.test_id,
+            per_project.test_id
         FROM
-            plx.google:m_lab.2009_03.all
-        WHERE
-            project = 0
-            AND web100_log_entry.is_last_entry = True
-            AND ((web100_log_entry.log_time >= 1237075200) AND  -- 2009-03-15
+          (
+            SELECT
+                test_id
+            FROM
+                plx.google:m_lab.2009_03.all
+            WHERE
+                project = 0
+                AND web100_log_entry.is_last_entry = True
+                AND ((web100_log_entry.log_time >= 1237075200) AND  -- 2009-03-15
+                     (web100_log_entry.log_time <  1237507200))     -- 2009-03-20
+          ) AS per_month
+        FULL OUTER JOIN EACH
+          (
+            SELECT
+                test_id
+            FROM
+                plx.google:m_lab.ndt.all
+            WHERE
+                ((web100_log_entry.log_time >= 1237075200) AND  -- 2009-03-15
                  (web100_log_entry.log_time <  1237507200))     -- 2009-03-20
-        ORDER BY
-            test_id"""
-
-        per_project_query_expected = """
-        SELECT
-            test_id
-        FROM
-            plx.google:m_lab.ndt.all
+          ) AS per_project
+        ON
+            per_month.test_id=per_project.test_id
         WHERE
-            ((web100_log_entry.log_time >= 1237075200) AND  -- 2009-03-15
-             (web100_log_entry.log_time <  1237507200))     -- 2009-03-20
-        ORDER BY
-            test_id"""
+            per_month.test_id IS NULL
+            OR per_project.test_id IS NULL"""
 
-        query_set_expected = (legacy_per_month_query_expected,
-                              per_project_query_expected)
         start_time = datetime.datetime(2009, 3, 15)
         end_time = datetime.datetime(2009, 3, 20)
-        query_set_actual = self._get_queries_actual(constants.PROJECT_ID_NDT,
-                                                    start_time, end_time)
-        self.assertQuerySetEqual(query_set_expected, query_set_actual)
+        query_actual = query_construct.TableEquivalenceQueryGenerator(
+            constants.PROJECT_ID_NDT, start_time, end_time).generate_query()
+        self.assertQueriesEqual(query_expected, query_actual)
 
     def test_correct_query_generation_for_npad(self):
-        legacy_per_month_query_expected = """
+        query_expected = """
         SELECT
-            test_id
+            per_month.test_id,
+            per_project.test_id
         FROM
-            plx.google:m_lab.2009_02.all,
-            plx.google:m_lab.2009_03.all,
-            plx.google:m_lab.2009_04.all
-        WHERE
-            project = 1
-            AND web100_log_entry.is_last_entry = True
-            AND ((web100_log_entry.log_time >= 1235865600) AND  -- 2009-03-01
+          (
+            SELECT
+                test_id
+            FROM
+                plx.google:m_lab.2009_02.all,
+                plx.google:m_lab.2009_03.all,
+                plx.google:m_lab.2009_04.all
+            WHERE
+                project = 1
+                AND web100_log_entry.is_last_entry = True
+                AND ((web100_log_entry.log_time >= 1235865600) AND  -- 2009-03-01
+                     (web100_log_entry.log_time <  1238544000))     -- 2009-04-01
+          ) AS per_month
+        FULL OUTER JOIN EACH
+          (
+
+            SELECT
+                test_id
+            FROM
+                plx.google:m_lab.npad.all
+            WHERE
+                ((web100_log_entry.log_time >= 1235865600) AND  -- 2009-03-01
                  (web100_log_entry.log_time <  1238544000))     -- 2009-04-01
-        ORDER BY
-            test_id"""
-
-        per_project_query_expected = """
-        SELECT
-            test_id
-        FROM
-            plx.google:m_lab.npad.all
+          ) AS per_project
+        ON
+            per_month.test_id=per_project.test_id
         WHERE
-            ((web100_log_entry.log_time >= 1235865600) AND  -- 2009-03-01
-             (web100_log_entry.log_time <  1238544000))     -- 2009-04-01
-        ORDER BY
-            test_id"""
+            per_month.test_id IS NULL
+            OR per_project.test_id IS NULL"""
 
-        query_set_expected = (legacy_per_month_query_expected,
-                              per_project_query_expected)
         start_time = datetime.datetime(2009, 3, 1)
         end_time = datetime.datetime(2009, 4, 1)
-        query_set_actual = self._get_queries_actual(constants.PROJECT_ID_NPAD,
-                                                    start_time, end_time)
-        self.assertQuerySetEqual(query_set_expected, query_set_actual)
+        query_actual = query_construct.TableEquivalenceQueryGenerator(
+            constants.PROJECT_ID_NPAD, start_time, end_time).generate_query()
+        self.assertQueriesEqual(query_expected, query_actual)
 
     def test_correct_query_generation_for_sidestream(self):
-        legacy_per_month_query_expected = """
+        query_expected = """
         SELECT
-            test_id
+            per_month.test_id,
+            per_project.test_id
         FROM
-            plx.google:m_lab.2014_12.all,
-            plx.google:m_lab.2015_01.all
-        WHERE
-            project = 2
-            AND ((web100_log_entry.log_time >= 1419724800) AND  -- 2014-12-28
+          (
+            SELECT
+                test_id
+            FROM
+                plx.google:m_lab.2014_12.all,
+                plx.google:m_lab.2015_01.all
+            WHERE
+                project = 2
+                AND ((web100_log_entry.log_time >= 1419724800) AND  -- 2014-12-28
+                     (web100_log_entry.log_time <  1420243200))     -- 2015-01-03
+          ) AS per_month
+        FULL OUTER JOIN EACH
+          (
+
+            SELECT
+                test_id
+            FROM
+                plx.google:m_lab.sidestream.all
+            WHERE
+                ((web100_log_entry.log_time >= 1419724800) AND  -- 2014-12-28
                  (web100_log_entry.log_time <  1420243200))     -- 2015-01-03
-        ORDER BY
-            test_id"""
-
-        per_project_query_expected = """
-        SELECT
-            test_id
-        FROM
-            plx.google:m_lab.sidestream.all
+          ) AS per_project
+        ON
+            per_month.test_id=per_project.test_id
         WHERE
-            ((web100_log_entry.log_time >= 1419724800) AND  -- 2014-12-28
-             (web100_log_entry.log_time <  1420243200))     -- 2015-01-03
-        ORDER BY
-            test_id"""
+            per_month.test_id IS NULL
+            OR per_project.test_id IS NULL"""
 
-        query_set_expected = (legacy_per_month_query_expected,
-                              per_project_query_expected)
         start_time = datetime.datetime(2014, 12, 28)
         end_time = datetime.datetime(2015, 1, 3)
-        query_set_actual = self._get_queries_actual(
-            constants.PROJECT_ID_SIDESTREAM, start_time, end_time)
-        self.assertQuerySetEqual(query_set_expected, query_set_actual)
+        query_actual = query_construct.TableEquivalenceQueryGenerator(
+            constants.PROJECT_ID_SIDESTREAM, start_time,
+            end_time).generate_query()
+        self.assertQueriesEqual(query_expected, query_actual)
 
     def test_correct_query_generation_for_paris_traceroute(self):
-        legacy_per_month_query_expected = """
+        query_expected = """
         SELECT
-            test_id
+            per_month.test_id,
+            per_project.test_id
         FROM
-            plx.google:m_lab.2014_12.all,
-            plx.google:m_lab.2015_01.all
-        WHERE
-            project = 3
-            AND ((web100_log_entry.log_time >= 1419724800) AND  -- 2014-12-28
+          (
+            SELECT
+                test_id
+            FROM
+                plx.google:m_lab.2014_12.all,
+                plx.google:m_lab.2015_01.all
+            WHERE
+                project = 3
+                AND ((web100_log_entry.log_time >= 1419724800) AND  -- 2014-12-28
+                     (web100_log_entry.log_time <  1420243200))     -- 2015-01-03
+          ) AS per_month
+        FULL OUTER JOIN EACH
+          (
+            SELECT
+                test_id
+            FROM
+                plx.google:m_lab.paris_traceroute.all
+            WHERE
+                ((web100_log_entry.log_time >= 1419724800) AND  -- 2014-12-28
                  (web100_log_entry.log_time <  1420243200))     -- 2015-01-03
-        ORDER BY
-            test_id"""
-
-        per_project_query_expected = """
-        SELECT
-            test_id
-        FROM
-            plx.google:m_lab.paris_traceroute.all
+          ) AS per_project
+        ON
+            per_month.test_id=per_project.test_id
         WHERE
-            ((web100_log_entry.log_time >= 1419724800) AND  -- 2014-12-28
-             (web100_log_entry.log_time <  1420243200))     -- 2015-01-03
-        ORDER BY
-            test_id"""
+            per_month.test_id IS NULL
+            OR per_project.test_id IS NULL"""
 
-        query_set_expected = (legacy_per_month_query_expected,
-                              per_project_query_expected)
         start_time = datetime.datetime(2014, 12, 28)
         end_time = datetime.datetime(2015, 1, 3)
-        query_set_actual = self._get_queries_actual(
-            constants.PROJECT_ID_PARIS_TRACEROUTE, start_time, end_time)
-        self.assertQuerySetEqual(query_set_expected, query_set_actual)
+        query_actual = query_construct.TableEquivalenceQueryGenerator(
+            constants.PROJECT_ID_PARIS_TRACEROUTE, start_time,
+            end_time).generate_query()
+        self.assertQueriesEqual(query_expected, query_actual)
 
 
 if __name__ == '__main__':

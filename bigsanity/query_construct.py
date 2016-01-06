@@ -19,8 +19,52 @@ import constants
 import table_names
 
 
-def _construct_equivalence_query(tables, conditions):
+def _construct_equivalence_query(per_month_query, per_project_query):
     """Constructs BigQuery SQL to be used in a table equivalence check.
+
+    Constructs a query composed of two subqueries that retrieve test_id values
+    from per-month table(s) and a per-project table. The query yields all of the
+    test_id values that appear in only one of the two tables (indicating an
+    inconsistency between the tables)
+
+    Args:
+        per_month_query: A BigQuery SQL query that selects test_id values from
+            the per-month tables.
+        per_project_query: A BigQuery SQL query that selects test_id values from
+            a per-project table.
+
+    Returns:
+        A BigQuery SQL query to test the equivalence of the two subqueries.
+    """
+    # Add whitespace for readable generated SQL.
+    per_month_query_indented = per_month_query.replace('\n', '\n        ')
+    per_project_query_indented = per_project_query.replace('\n', '\n        ')
+    return """
+SELECT
+    per_month.test_id,
+    per_project.test_id
+FROM
+    (
+        {per_month_query_indented}
+    ) AS per_month
+    FULL OUTER JOIN EACH
+    (
+        {per_project_query_indented}
+    ) AS per_project
+ON
+    per_month.test_id=per_project.test_id
+WHERE
+    per_month.test_id IS NULL
+    OR per_project.test_id IS NULL""".format(
+        per_month_query_indented=per_month_query_indented,
+        per_project_query_indented=per_project_query_indented)
+
+
+def _construct_test_id_subquery(tables, conditions):
+    """Constructs BigQuery SQL to retrieve test_id values.
+
+    Constructs a BigQuery SQL query to retrieve the test_id values from the
+    specified tables with the specified set of conditions.
 
     Args:
         tables: A list of BigQuery table names to query.
@@ -35,10 +79,8 @@ SELECT
 FROM
     {tables}
 WHERE
-    {conditions}
-ORDER BY
-    test_id""".format(tables=',\n    '.join(tables),
-                      conditions='\n    AND '.join(conditions)).strip()
+    {conditions}""".format(tables=',\n    '.join(tables),
+                           conditions='\n    AND '.join(conditions)).strip()
 
 
 def _format_project_condition(project):
@@ -80,17 +122,23 @@ class TableEquivalenceQueryGenerator(object):
         self._time_range_start = time_range_start
         self._time_range_end = time_range_end
 
-    def generate_queries(self):
-        """Generate two or more equivalance queries.
+    def generate_query(self):
+        """Generates a query demonstrating equivalence between two table types.
 
-        Generates two or more equivalence queries. That is, distinct queries
-        that should yield the exact same resulting data.
+        Generates a query that should yield 0 rows if the target tables contain
+        equivalent data within the given time window. If the query does yield
+        rows, this indicates that the tables are not equivalent. Non-NULL values
+        in the per_month.test_id column indicate test_ids present in the
+        per-month table that did not appear in the per-project table, while non-
+        NULL values in the per_project.test_id column indicate test_ids present
+        in the per-project table that did not appear in the per-month table.
 
         Returns:
-            A tuple of BigQuery SQL query strings.
+            A BigQuery SQL statement that yields 0 rows if the per month and
+            per-project tables are equivalent.
         """
-        return (self._generate_per_month_query(),
-                self._generate_per_project_query())
+        return _construct_equivalence_query(self._generate_per_month_query(),
+                                            self._generate_per_project_query())
 
     def _generate_per_month_query(self):
         conditions = []
@@ -100,12 +148,12 @@ class TableEquivalenceQueryGenerator(object):
         conditions.append(self._format_time_range_condition())
         tables = table_names.monthly_tables(self._time_range_start,
                                             self._time_range_end)
-        return _construct_equivalence_query(tables, conditions)
+        return _construct_test_id_subquery(tables, conditions)
 
     def _generate_per_project_query(self):
         tables = [table_names.per_project_table(self._project)]
         conditions = [self._format_time_range_condition()]
-        return _construct_equivalence_query(tables, conditions)
+        return _construct_test_id_subquery(tables, conditions)
 
     def _format_time_range_condition(self):
         start_time = _to_unix_timestamp(self._time_range_start)
