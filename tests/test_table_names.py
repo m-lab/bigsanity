@@ -47,10 +47,10 @@ class TableNamesTest(unittest.TestCase):
 
     def test_monthly_tables_rejects_invalid_dates(self):
         """Reject invalid table dates."""
-        # 2009-02-01 is before M-Lab epoch.
+        # 2009-01-31 is before M-Lab epoch.
         with self.assertRaises(ValueError):
             table_names.monthly_tables(
-                datetime.datetime(2009, 2, 1), datetime.datetime(2009, 3, 1))
+                datetime.datetime(2009, 1, 31), datetime.datetime(2009, 3, 1))
         # It should never be possible to generate table names for future dates.
         with self.assertRaises(ValueError):
             table_names.monthly_tables(
@@ -58,11 +58,17 @@ class TableNamesTest(unittest.TestCase):
                 datetime.datetime.now() + datetime.timedelta(days=1))
 
     def test_monthly_tables(self):
-        """Generate legacy monthly table names for valid date range."""
+        """Generate monthly table names for valid date range."""
         self.assertSequenceEqual(
             ('plx.google:m_lab.2009_02.all',
              'plx.google:m_lab.2009_03.all'), table_names.monthly_tables(
                  datetime.datetime(2009, 2, 11), datetime.datetime(2009, 3, 1)))
+
+        # Rounding down to 2009-02-01 is okay even though M-Lab epoch is
+        # 2009-02-11 because the 2009_02 table still exists.
+        self.assertSequenceEqual(
+            ('plx.google:m_lab.2009_02.all',), table_names.monthly_tables(
+                datetime.datetime(2009, 2, 1), datetime.datetime(2009, 2, 15)))
 
         # Including the 1-day buffer, 2012-01-01 spills over into the previous
         # month's table.
