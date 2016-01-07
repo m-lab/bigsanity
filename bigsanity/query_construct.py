@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import datetime
-import re
 
 import constants
 import table_names
