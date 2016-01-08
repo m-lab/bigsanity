@@ -25,6 +25,7 @@ import check_table_equivalence
 import constants
 import formatting
 import query_construct
+import query_execution
 
 MOCK_QUERY = 'mock SQL query string'
 START_TIME = datetime.datetime(2010, 1, 5)
@@ -40,10 +41,7 @@ class TabeEquivalenceCheckerTest(unittest.TestCase):
         self.query_generator_factory = mock.Mock(
             spec=query_construct.TableEquivalenceQueryGeneratorFactory)
         self.query_generator_factory.create.return_value = self.query_generator
-        #TODO(mtlynch): Replace with the following line once the query_execution
-        # code is checked in.
-        #self.query_executor = mock.Mock(spec=query_execution.QueryExecutor)
-        self.query_executor = mock.Mock()
+        self.query_executor = mock.Mock(spec=query_execution.QueryExecutor)
         self.checker = check_table_equivalence.TableEquivalenceChecker(
             self.query_generator_factory, self.query_executor)
 
@@ -147,10 +145,7 @@ class TabeEquivalenceCheckerTest(unittest.TestCase):
 
     def test_check_raises_exception_if_query_executor_raises_exception(self):
         """Checker should not catch any exceptions from query executor."""
-        #TODO(mtlynch): Replace with the following line once the query_execution
-        # code is checked in.
-        #query_executor = mock.Mock(spec=query_execution.QueryExecutor)
-        query_executor = mock.Mock()
+        query_executor = mock.Mock(spec=query_execution.QueryExecutor)
         query_executor.execute_query.side_effect = ValueError(
             'mock value error')
         checker = check_table_equivalence.TableEquivalenceChecker(
