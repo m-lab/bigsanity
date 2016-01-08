@@ -30,10 +30,13 @@ def indent(s, spaces=2):
 
     Args:
         s: The string to indent.
-        spaces: The number of spaces to indent.
+        spaces: The number of spaces to indent. Must be >= 0.
 
     Returns:
         The value of s with prepended spaces on each line.
+
+    Raises:
+        ValueError: An invalid value was specified for spaces.
     """
     if spaces < 0:
         raise ValueError('spaces must be non-negative, but was %d' % spaces)
