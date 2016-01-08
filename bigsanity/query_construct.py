@@ -15,6 +15,7 @@
 import datetime
 
 import constants
+import formatting
 import table_names
 
 
@@ -35,28 +36,25 @@ def _construct_equivalence_query(per_month_query, per_project_query):
     Returns:
         A BigQuery SQL query to test the equivalence of the two subqueries.
     """
-    # Add whitespace for readable generated SQL.
-    per_month_query_indented = per_month_query.replace('\n', '\n        ')
-    per_project_query_indented = per_project_query.replace('\n', '\n        ')
     return """
 SELECT
     per_month.test_id,
     per_project.test_id
 FROM
     (
-        {per_month_query_indented}
+{per_month_query}
     ) AS per_month
     FULL OUTER JOIN EACH
     (
-        {per_project_query_indented}
+{per_project_query}
     ) AS per_project
 ON
     per_month.test_id=per_project.test_id
 WHERE
     per_month.test_id IS NULL
     OR per_project.test_id IS NULL""".format(
-        per_month_query_indented=per_month_query_indented,
-        per_project_query_indented=per_project_query_indented)
+        per_month_query=formatting.indent(per_month_query, 8),
+        per_project_query=formatting.indent(per_project_query, 8))
 
 
 def _construct_test_id_subquery(tables, conditions):
