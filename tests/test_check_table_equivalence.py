@@ -32,7 +32,7 @@ START_TIME = datetime.datetime(2010, 1, 5)
 END_TIME = datetime.datetime(2010, 1, 15)
 
 
-class TabeEquivalenceCheckerTest(unittest.TestCase):
+class TableEquivalenceCheckerTest(unittest.TestCase):
 
     def setUp(self):
         self.query_generator = mock.Mock(
