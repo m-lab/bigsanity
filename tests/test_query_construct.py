@@ -284,8 +284,8 @@ class TableEquivalenceQueryGeneratorTest(unittest.TestCase):
                 plx.google:m_lab.2015_01.all
             WHERE
                 project = 3
-                AND ((web100_log_entry.log_time >= 1419724800) AND  -- 2014-12-28
-                     (web100_log_entry.log_time <  1420243200))     -- 2015-01-03
+                AND ((log_time >= 1419724800) AND  -- 2014-12-28
+                     (log_time <  1420243200))     -- 2015-01-03
           ) AS per_month
         FULL OUTER JOIN EACH
           (
@@ -294,8 +294,8 @@ class TableEquivalenceQueryGeneratorTest(unittest.TestCase):
             FROM
                 plx.google:m_lab.paris_traceroute.all
             WHERE
-                ((web100_log_entry.log_time >= 1419724800) AND  -- 2014-12-28
-                 (web100_log_entry.log_time <  1420243200))     -- 2015-01-03
+                ((log_time >= 1419724800) AND  -- 2014-12-28
+                 (log_time <  1420243200))     -- 2015-01-03
           ) AS per_project
         ON
             per_month.test_id=per_project.test_id
