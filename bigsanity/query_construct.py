@@ -102,6 +102,26 @@ def _project_has_intermediate_snapshots(project):
             project == constants.PROJECT_ID_NPAD)
 
 
+def _project_to_time_field(project):
+    """Returns the appropriate test log time field for the project type.
+
+    Returns the appropriate test log time field for a test given its project
+    type. All web100 M-Lab tests use 'web100_log_entry.log_time', while Paris
+    Traceroute uses 'log_time'.
+
+    Args:
+        project: The numeric ID of the project (e.g. NDT = 0).
+
+    Returns:
+        The string name of the log time field for the given project in the
+        BigQuery dataset schema.
+    """
+    if project == constants.PROJECT_ID_PARIS_TRACEROUTE:
+        return 'log_time'
+    else:
+        return 'web100_log_entry.log_time'
+
+
 class TableEquivalenceQueryGenerator(object):
     """Generates queries to test the equivalence of two M-Lab tables."""
 
@@ -153,17 +173,18 @@ class TableEquivalenceQueryGenerator(object):
         return _construct_test_id_subquery(tables, conditions)
 
     def _format_time_range_condition(self):
+        time_field = _project_to_time_field(self._project)
         start_time = _to_unix_timestamp(self._time_range_start)
         start_time_human = _to_human_readable_date(self._time_range_start)
         end_time = _to_unix_timestamp(self._time_range_end)
         end_time_human = _to_human_readable_date(self._time_range_end)
-        return (
-            '((web100_log_entry.log_time >= {start_time}) AND  -- {start_time_human}'
-            '\n         (web100_log_entry.log_time < {end_time}))  -- {end_time_human}'
-        ).format(start_time=start_time,
-                 start_time_human=start_time_human,
-                 end_time=end_time,
-                 end_time_human=end_time_human)
+        return ('(({time_field} >= {start_time}) AND  -- {start_time_human}'
+                '\n         ({time_field} < {end_time}))  -- {end_time_human}'
+               ).format(time_field=time_field,
+                        start_time=start_time,
+                        start_time_human=start_time_human,
+                        end_time=end_time,
+                        end_time_human=end_time_human)
 
 
 class TableEquivalenceQueryGeneratorFactory(object):
