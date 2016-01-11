@@ -14,7 +14,10 @@
 
 import csv
 import io
+import logging
 import formatting
+
+logger = logging.getLogger(__name__)
 
 
 def _parse_query_result(query_result):
@@ -131,6 +134,8 @@ class TableEquivalenceChecker(object):
         """
         query = self._query_generator_factory.create(
             project, time_range_start, time_range_end).generate_query()
+        logger.debug('Performing table equivalence check. BigQuery SQL:%s',
+                     formatting.indent(query))
         query_result = self._query_executor.execute_query(query)
         if query_result:
             # Non-empty results of the query indicates that the check failed.
