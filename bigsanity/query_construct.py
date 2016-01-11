@@ -112,7 +112,7 @@ class TableEquivalenceQueryGenerator(object):
             project: Numerical ID of M-Lab project in BigQuery (e.g. NDT = 0).
             time_range_start: Start of window (inclusive) for which to generate
                 query (as datetime).
-            time_range_start: End of time window (not inclusive) for which to
+            time_range_end: End of time window (not inclusive) for which to
                 generate query (as datetime).
         """
         self._project = project
@@ -164,3 +164,19 @@ class TableEquivalenceQueryGenerator(object):
                  start_time_human=start_time_human,
                  end_time=end_time,
                  end_time_human=end_time_human)
+
+
+class TableEquivalenceQueryGeneratorFactory(object):
+
+    def create(self, project, time_range_start, time_range_end):
+        """Creates a new TableEquivalenceQueryGenerator.
+
+        Args:
+            project: Numerical ID of M-Lab project in BigQuery (e.g. NDT = 0).
+            time_range_start: Start of window (inclusive) for which to generate
+                query (as datetime).
+            time_range_end: End of time window (not inclusive) for which to
+                generate query (as datetime).
+        """
+        return TableEquivalenceQueryGenerator(project, time_range_start,
+                                              time_range_end)
