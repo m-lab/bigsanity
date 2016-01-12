@@ -18,6 +18,7 @@ import logging
 import sys
 
 import cli
+import intervals
 import query_construct
 import query_execution
 import check_table_equivalence
@@ -25,49 +26,6 @@ import check_table_equivalence
 logger = logging.getLogger(__name__)
 LOG_FORMAT = (
     '%(asctime)-15s %(levelname)-5s %(module)s.py:%(lineno)-d %(message)s')
-
-
-def date_limits_to_intervals(date_start, date_end, date_step):
-    """Convert a date range and step to a series of date intervals.
-
-    Given a date start, end, and step, creates a list of 2-tuples of
-    (start, end) times to fill up the date range. Note that date_end takes
-    precedence over date_step (i.e. we never generate a date range that is
-    after date_end).
-
-    For example:
-
-        date_limits_to_intervals(
-            datetime.datetime(2015, 1, 1),
-            datetime.datetime(2015, 4, 1),
-            relativedelta.relativedelta(months=1))
-
-    would yield:
-
-        [(datetime.datetime(2015, 1, 1),
-          datetime.datetime(2015, 2, 1)),
-         (datetime.datetime(2015, 2, 1),
-          datetime.datetime(2015, 3, 1)),
-         (datetime.datetime(2015, 3, 1),
-          datetime.datetime(2015, 4, 1)),]
-
-    Args:
-        date_start: A datetime indicating the start of the date range
-            (inclusive).
-        date_end: A datetime indicating the end of the date range (exclusive).
-        date_step: A relativedelta indicating how large the date intervals
-            should be. This must be a positive delta.
-
-    Returns:
-        A list of 2-tuples of (start, end) datetimes to fill the date range.
-    """
-    intervals = []
-    interval_start = date_start
-    while interval_start < date_end:
-        interval_end = min(interval_start + date_step, date_end)
-        intervals.append((interval_start, interval_end))
-        interval_start = interval_end
-    return intervals
 
 
 def _is_sane(project, date_start, date_end, date_step):
@@ -89,7 +47,8 @@ def _is_sane(project, date_start, date_end, date_step):
         query_construct.TableEquivalenceQueryGeneratorFactory(),
         query_execution.QueryExecutor())
     found_error = False
-    check_windows = date_limits_to_intervals(date_start, date_end, date_step)
+    check_windows = intervals.date_limits_to_intervals(date_start, date_end,
+                                                       date_step)
     for date_range_start, date_range_end in check_windows:
         logger.info('Checking cross-table consistency for project=%d, %s -> %s',
                     project, date_range_start.strftime(cli.DATE_FORMAT),

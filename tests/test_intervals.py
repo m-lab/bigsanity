@@ -21,15 +21,15 @@ from dateutil import relativedelta
 
 sys.path.insert(1, os.path.abspath(os.path.join(
     os.path.dirname(__file__), '../bigsanity')))
-import bigsanity.bigsanity as bigsanity
+import intervals
 
 
-class BigSanityTest(unittest.TestCase):
+class IntervalsTest(unittest.TestCase):
 
     def test_date_limits_to_intervals_when_limit_is_exactly_one_interval(self):
         intervals_expected = [(datetime.datetime(2015, 1, 1),
                                datetime.datetime(2015, 2, 1))]
-        intervals_actual = bigsanity.date_limits_to_intervals(
+        intervals_actual = intervals.date_limits_to_intervals(
             datetime.datetime(2015, 1, 1),
             datetime.datetime(2015, 2, 1),
             relativedelta.relativedelta(months=1))
@@ -43,7 +43,7 @@ class BigSanityTest(unittest.TestCase):
                                datetime.datetime(2015, 3, 1)),
                               (datetime.datetime(2015, 3, 1),
                                datetime.datetime(2015, 4, 1)),]
-        intervals_actual = bigsanity.date_limits_to_intervals(
+        intervals_actual = intervals.date_limits_to_intervals(
             datetime.datetime(2015, 1, 1),
             datetime.datetime(2015, 4, 1),
             relativedelta.relativedelta(months=1))
@@ -56,7 +56,7 @@ class BigSanityTest(unittest.TestCase):
                                datetime.datetime(2015, 2, 1)),
                               (datetime.datetime(2015, 2, 1),
                                datetime.datetime(2015, 2, 16)),]
-        intervals_actual = bigsanity.date_limits_to_intervals(
+        intervals_actual = intervals.date_limits_to_intervals(
             datetime.datetime(2015, 1, 1),
             datetime.datetime(2015, 2, 16),
             relativedelta.relativedelta(months=1))
@@ -67,7 +67,7 @@ class BigSanityTest(unittest.TestCase):
         """Intervals should never extend past the end date."""
         intervals_expected = [(datetime.datetime(2015, 1, 1),
                                datetime.datetime(2015, 1, 21))]
-        intervals_actual = bigsanity.date_limits_to_intervals(
+        intervals_actual = intervals.date_limits_to_intervals(
             datetime.datetime(2015, 1, 1),
             datetime.datetime(2015, 1, 21),
             relativedelta.relativedelta(months=1))
