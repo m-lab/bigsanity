@@ -18,6 +18,7 @@ import sys
 import unittest
 
 from dateutil import relativedelta
+import mock
 
 sys.path.insert(1, os.path.abspath(os.path.join(
     os.path.dirname(__file__), '../bigsanity')))
@@ -41,38 +42,55 @@ class CliTest(unittest.TestCase):
             # Empty string.
             cli.parse_date_arg('')
 
-    def test_parse_interval_arg_succeeds_when_interval_has_valid_format(self):
+    def test_parse_interval_days_arg_succeeds_with_valid_arg(self):
         self.assertEqual(
-            relativedelta.relativedelta(days=5),
-            cli.parse_interval_arg('5_days'))
+            relativedelta.relativedelta(days=1),
+            cli.parse_interval_days_arg('1'))
         self.assertEqual(
-            relativedelta.relativedelta(months=1),
-            cli.parse_interval_arg('1_months'))
+            relativedelta.relativedelta(days=100),
+            cli.parse_interval_days_arg('100'))
 
-    def test_parse_interval_raises_error_when_time_value_is_not_positive(self):
+    def test_parse_interval_days_arg_raises_error_when_arg_is_not_positive(
+            self):
         """Zero or negative values for time should raise a ValueError."""
         with self.assertRaises(ValueError):
-            cli.parse_interval_arg('-5_days')
+            cli.parse_interval_days_arg('-5')
         with self.assertRaises(ValueError):
-            cli.parse_interval_arg('0_days')
+            cli.parse_interval_days_arg('0')
 
-    def test_parse_interval_raises_error_on_invalid_format(self):
-        with self.assertRaises(ValueError):
-            cli.parse_interval_arg('1months')
-        with self.assertRaises(ValueError):
-            cli.parse_interval_arg('_1months')
-        with self.assertRaises(ValueError):
-            cli.parse_interval_arg('1months_')
-        with self.assertRaises(ValueError):
-            cli.parse_interval_arg('_1_months_')
-        with self.assertRaises(ValueError):
-            cli.parse_interval_arg('banana')
+    def test_parse_interval_months_arg_succeeds_with_valid_arg(self):
+        self.assertEqual(
+            relativedelta.relativedelta(months=1),
+            cli.parse_interval_months_arg('1'))
+        self.assertEqual(
+            relativedelta.relativedelta(months=36),
+            cli.parse_interval_months_arg('36'))
 
-    def test_parse_interval_raises_error_on_unsupported_time_unit(self):
+    def test_parse_interval_months_arg_raises_error_when_arg_is_not_positive(
+            self):
+        """Zero or negative values for time should raise a ValueError."""
         with self.assertRaises(ValueError):
-            cli.parse_interval_arg('1_minutes')
+            cli.parse_interval_months_arg('-5')
         with self.assertRaises(ValueError):
-            cli.parse_interval_arg('1_years')
+            cli.parse_interval_months_arg('0')
+
+    def test_get_interval_when_days_specified(self):
+        interval_days = relativedelta.relativedelta(days=5)
+        mock_args = mock.Mock(interval_days=relativedelta.relativedelta(days=5),
+                              interval_months=None)
+        self.assertEqual(interval_days, cli.get_interval(mock_args))
+
+    def test_get_interval_when_months_specified(self):
+        interval_months = relativedelta.relativedelta(months=3)
+        mock_args = mock.Mock(
+            interval_days=None,
+            interval_months=relativedelta.relativedelta(months=3))
+        self.assertEqual(interval_months, cli.get_interval(mock_args))
+
+    def test_get_interval_raises_error_when_no_interval_is_specified(self):
+        mock_args = mock.Mock(interval_days=None, interval_months=None)
+        with self.assertRaises(ValueError):
+            cli.get_interval(mock_args)
 
 
 if __name__ == '__main__':

@@ -15,7 +15,6 @@
 import argparse
 import datetime
 import logging
-import sys
 
 import cli
 import intervals
@@ -39,14 +38,10 @@ def _is_sane(project, date_start, date_end, date_step):
         date_start: Limits checks to M-Lab tests that occurred on or after this
             date.
         date_end: Limits checks to M-Lab tests that occurred before this date.
-
-    Returns:
-        True if all sanity checks pass.
     """
     checker = check_table_equivalence.TableEquivalenceChecker(
         query_construct.TableEquivalenceQueryGeneratorFactory(),
         query_execution.QueryExecutor())
-    found_error = False
     check_windows = intervals.date_limits_to_intervals(date_start, date_end,
                                                        date_step)
     for date_range_start, date_range_end in check_windows:
@@ -56,8 +51,6 @@ def _is_sane(project, date_start, date_end, date_step):
         check_result = checker.check(project, date_range_start, date_range_end)
         if not check_result.success:
             logger.error(check_result.message)
-            found_error = True
-    return not found_error
 
 
 def main(args):
@@ -66,14 +59,9 @@ def main(args):
     else:
         log_level = logging.INFO
     logging.basicConfig(level=log_level, format=LOG_FORMAT)
+    date_step = cli.get_interval(args)
 
-    date_start = cli.parse_date_arg(args.start_date)
-    date_end = cli.parse_date_arg(args.end_date)
-    date_step = cli.parse_interval_arg(args.interval)
-
-    project = int(args.project)
-    if not _is_sane(project, date_start, date_end, date_step):
-        return sys.exit(-1)
+    _is_sane(args.project, args.start_date, args.end_date, date_step)
 
 
 if __name__ == '__main__':
@@ -86,18 +74,28 @@ if __name__ == '__main__':
                         choices=range(0, 4),
                         required=True,
                         help='ID of M-Lab project in BigQuery')
-    parser.add_argument('-s', '--start_date', default='2009-02-01')
+    parser.add_argument('-s',
+                        '--start_date',
+                        default='2009-02-01',
+                        type=cli.parse_date_arg)
     parser.add_argument(
         '-e',
         '--end_date',
-        default=datetime.datetime.now().strftime(cli.DATE_FORMAT))
-    parser.add_argument(
-        '-i',
-        '--interval',
-        required=True,
-        help=('The size of the time windows for each sanity check query. Must '
-              'be in the form of [numeric_value]_[time units], e.g. "2_months".'
-              ' The time units "days" and "months" are supported.'))
+        default=datetime.datetime.now().strftime(cli.DATE_FORMAT),
+        type=cli.parse_date_arg)
+    interval_group = parser.add_mutually_exclusive_group()
+    interval_group.add_argument(
+        '-d',
+        '--interval_days',
+        type=cli.parse_interval_days_arg,
+        help=('Specifies the size of the time windows for each sanity check '
+              'query in days.'))
+    interval_group.add_argument(
+        '-m',
+        '--interval_months',
+        type=cli.parse_interval_months_arg,
+        help=('Specifies the size of the time windows for each sanity check '
+              'query in months.'))
     parser.add_argument('-v',
                         '--verbose',
                         help='Produce verbose log output',

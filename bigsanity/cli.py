@@ -30,27 +30,65 @@ def parse_date_arg(date_arg):
     return datetime.datetime.strptime(date_arg, DATE_FORMAT)
 
 
-def parse_interval_arg(interval_arg):
-    """Parses an interval command line parameter string into an interval.
+def parse_interval_days_arg(days_arg):
+    """Parses the interval days command line string into an interval.
 
     Args:
-       interval_arg: An interval string in the form of
-           "[numeric_value]_[time_unit]". For example "3_months". Time units
-           supported are: "days" and "months". The numeric value must be a
-           positive integer.
+       days_arg: A string representing a number of days in an interval.
 
     Returns:
         A relativedelta value parsed from the time interval.
+
+    Raises:
+        ValueError: If the supplied days argument is not positive.
     """
-    value_str, units = interval_arg.split('_')
-    value = int(value_str)
-    if value <= 0:
-        raise ValueError('Interval value must be a positive number: %d' % value)
-    units_to_interval = {
-        'days': relativedelta.relativedelta(days=value),
-        'months': relativedelta.relativedelta(months=value),
-    }
-    if units not in units_to_interval:
-        raise ValueError('Unrecognized time units: %s. Supported units: %s' %
-                         (units, units_to_interval.keys()))
-    return units_to_interval[units]
+    days = int(days_arg)
+    if days <= 0:
+        raise ValueError('Interval value must be a positive number: %d' % days)
+    return relativedelta.relativedelta(days=days)
+
+
+def parse_interval_months_arg(months_arg):
+    """Parses the interval months command line string into an interval.
+
+    Args:
+       months_arg: A string representing a number of months in an interval.
+
+    Returns:
+        A relativedelta value parsed from the time interval.
+
+    Raises:
+        ValueError: If the supplied months argument is not positive.
+    """
+    months = int(months_arg)
+    if months <= 0:
+        raise ValueError('Interval value must be a positive number: %d' %
+                         months)
+    return relativedelta.relativedelta(months=months)
+
+
+def get_interval(args):
+    """Given BigSanity's command line arguments, retrieves the interval value.
+
+    Retrieves the correct interval value from among BigSanity's interval command
+    line options. This is necessary as an interval parameter is required, but
+    argparse does not offer support for mutually-exclusive parameters where at
+    least one is required.
+
+    Args:
+        args: Command line arguments parsed from the command line by argparse.
+
+    Returns:
+        The value of the selected
+
+    Raises:
+        ValueError: If the user did not specify a value for the
+            --interval_days or --interval_months parameters.
+    """
+    if args.interval_days:
+        return args.interval_days
+    elif args.interval_months:
+        return args.interval_months
+    else:
+        raise ValueError(
+            'Must specify at least one of --interval_days or --interval_months')
