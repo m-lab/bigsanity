@@ -27,7 +27,7 @@ LOG_FORMAT = (
     '%(asctime)-15s %(levelname)-5s %(module)s.py:%(lineno)-d %(message)s')
 
 
-def _is_sane(project, date_start, date_end, date_step):
+def _do_cross_table_consistency_check(project, date_start, date_end, date_step):
     """Performs sanity checks on all the time windows in the given range.
 
     Performs all BigSanity sanity checks on the M-Lab BigQuery tables for the
@@ -61,7 +61,8 @@ def main(args):
     logging.basicConfig(level=log_level, format=LOG_FORMAT)
     date_step = cli.get_interval(args)
 
-    _is_sane(args.project, args.start_date, args.end_date, date_step)
+    _do_cross_table_consistency_check(args.project, args.start_date,
+                                      args.end_date, date_step)
 
 
 if __name__ == '__main__':
