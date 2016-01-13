@@ -55,7 +55,7 @@ class QueryExecutor(object):
             The result of the query in CSV format.
         """
         bq_params = [
-            'query', '--format=csv', '--batch', '--headless', '--quiet',
+            'query', '--format=csv', '--headless', '--quiet',
             '--max_rows=2000000000'
         ]
         try:
