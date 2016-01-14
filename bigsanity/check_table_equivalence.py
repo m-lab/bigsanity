@@ -19,6 +19,10 @@ import formatting
 
 logger = logging.getLogger(__name__)
 
+# The maximum number of test_id values to display in a single group in check
+# failure messages.
+_MAX_DISPLAYED_TEST_IDS = 10
+
 
 def _parse_query_result(query_result):
     """Parses the results of a table equivalence query.
@@ -44,6 +48,32 @@ def _parse_query_result(query_result):
     return per_month_ids, per_project_ids
 
 
+def _format_test_ids(test_ids):
+    """Formats a list of test_id values to be printed to the console.
+
+    Formats a list of test_id values so that they can be printed to the console.
+    This involves:
+        * Removing duplicates
+        * Sorting the values in lexicographic order
+        * Reducing the list to size _MAX_DISPLAYED_TEST_IDS
+        * Adding a message to indicate when test_id values were removed.
+
+    Args:
+        test_ids: A list of test_id values to format.
+
+    Returns:
+        A formatted list of test_id values that can be included in a check
+        failure message.
+    """
+    unique_test_ids = sorted(list(set(test_ids)))[:_MAX_DISPLAYED_TEST_IDS]
+    number_omitted_ids = max(0, len(test_ids) - _MAX_DISPLAYED_TEST_IDS)
+    if number_omitted_ids:
+        unique_test_ids.append(
+            '(%s additional or duplicate test_id values omitted)' %
+            number_omitted_ids)
+    return formatting.indent('\n'.join(unique_test_ids))
+
+
 def _format_check_failure_message(per_month_ids, per_project_ids, query):
     """Creates a user-friendly message explaining an equivalence check failure.
 
@@ -61,11 +91,11 @@ def _format_check_failure_message(per_month_ids, per_project_ids, query):
     if per_month_ids:
         message += ('test_id values present in per-month table, but NOT present'
                     ' in per-project table:\n')
-        message += '%s\n' % formatting.indent('\n'.join(per_month_ids))
+        message += '%s\n' % _format_test_ids(per_month_ids)
     if per_project_ids:
         message += ('test_id values present in per-project table, but NOT '
                     'present in per-month table:\n')
-        message += '%s\n' % formatting.indent('\n'.join(per_project_ids))
+        message += '%s\n' % _format_test_ids(per_project_ids)
     message += 'BigQuery SQL:\n%s' % formatting.indent(query)
     return message
 
