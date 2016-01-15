@@ -35,6 +35,7 @@ END_TIME = datetime.datetime(2010, 1, 15)
 class TableEquivalenceCheckerTest(unittest.TestCase):
 
     def setUp(self):
+        self.maxDiff = None
         self.query_generator = mock.Mock(
             spec=query_construct.TableEquivalenceQueryGenerator)
         self.query_generator.generate_query.return_value = MOCK_QUERY
@@ -117,6 +118,48 @@ class TableEquivalenceCheckerTest(unittest.TestCase):
              'test_id values present in per-project table, but NOT present in '
              'per-month table:\n'
              '  mock_id_3\n'
+             'BigQuery SQL:\n' + formatting.indent(MOCK_QUERY)))
+
+    def test_check_trims_list_of_extra_ids_when_the_list_is_large(self):
+        """When the check finds many extra test_ids, we should trim the list.
+
+        If the list of extra test_id values is very long, we should trim it
+        down, remove duplicates, and sort it.
+        """
+        mock_query_result = 'per_month_test_id,per_project_test_id\n'
+
+        # Add the first 5 values out of order.
+        mock_query_result += ',mock_id_03\n'
+        mock_query_result += ',mock_id_00\n'
+        mock_query_result += ',mock_id_02\n'
+        mock_query_result += ',mock_id_04\n'
+        mock_query_result += ',mock_id_01\n'
+
+        # Add 100 more rows with duplicates.
+        for i in range(0, 100):
+            mock_query_result += ',mock_id_%02d\n' % i
+
+        self.query_executor.execute_query.return_value = mock_query_result
+
+        check_result = self.checker.check(constants.PROJECT_ID_NDT, START_TIME,
+                                          END_TIME)
+        self.assertFalse(check_result.success)
+        self.assertMultiLineEqual(
+            check_result.message,
+            ('Check failed: TABLE EQUIVALENCE\n'
+             'test_id values present in per-project table, but NOT present in '
+             'per-month table:\n'
+             '  mock_id_00\n'
+             '  mock_id_01\n'
+             '  mock_id_02\n'
+             '  mock_id_03\n'
+             '  mock_id_04\n'
+             '  mock_id_05\n'
+             '  mock_id_06\n'
+             '  mock_id_07\n'
+             '  mock_id_08\n'
+             '  mock_id_09\n'
+             '  (95 additional or duplicate test_id values omitted)\n'
              'BigQuery SQL:\n' + formatting.indent(MOCK_QUERY)))
 
     def test_check_raises_exception_if_generator_factory_raises_exception(self):
