@@ -71,7 +71,7 @@ def _format_test_ids(test_ids):
         unique_test_ids.append(
             '(%s additional or duplicate test_id values omitted)' %
             number_omitted_ids)
-    return formatting.indent('\n'.join(unique_test_ids))
+    return formatting.indent('\n'.join(unique_test_ids), 2)
 
 
 def _format_check_failure_message(per_month_ids, per_project_ids, query):
@@ -96,7 +96,7 @@ def _format_check_failure_message(per_month_ids, per_project_ids, query):
         message += ('test_id values present in per-project table, but NOT '
                     'present in per-month table:\n')
         message += '%s\n' % _format_test_ids(per_project_ids)
-    message += 'BigQuery SQL:\n%s' % formatting.indent(query)
+    message += 'BigQuery SQL:\n%s' % formatting.indent(query, 2)
     return message
 
 
