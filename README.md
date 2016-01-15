@@ -16,3 +16,17 @@ To install BigSanity's required Python packages:
 To install the Python packages required to run BigSanity's test suite:
 
 `pip install -r test-requirements.txt`
+
+# Performing Sanity Checks
+
+The following commands will perform full sanity checks with BigSanity from the
+start of each project until the present. The interval lengths are chosen to be
+large enough to minimize total number of queries, but small enough to not
+exhaust BigQuery resources.
+
+```
+python bigsanity/bigsanity.py --project 0 --start_date 2009-02-11 --interval_months 5
+python bigsanity/bigsanity.py --project 1 --start_date 2009-02-11 --interval_months 36
+python bigsanity/bigsanity.py --project 2 --start_date 2009-08-24 --interval_days 3
+python bigsanity/bigsanity.py --project 3 --start_date 2013-05-08 --interval_days 4
+```
