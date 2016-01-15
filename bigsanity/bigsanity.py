@@ -44,6 +44,8 @@ def _do_cross_table_consistency_check(project, date_start, date_end, date_step):
         query_execution.QueryExecutor())
     check_windows = intervals.date_limits_to_intervals(date_start, date_end,
                                                        date_step)
+    logger.info('Total of %d time intervals to check.', len(check_windows))
+    anomalies_detected = 0
     for date_range_start, date_range_end in check_windows:
         logger.info('Checking cross-table consistency for project=%d, %s -> %s',
                     project, date_range_start.strftime(cli.DATE_FORMAT),
@@ -51,6 +53,11 @@ def _do_cross_table_consistency_check(project, date_start, date_end, date_step):
         check_result = checker.check(project, date_range_start, date_range_end)
         if not check_result.success:
             logger.error(check_result.message)
+            anomalies_detected += 1
+    logger.info(
+        ('Cross-table consistency check completed for project=%d, %s -> %s, '
+         'with %d failures.'), project, date_start.strftime(cli.DATE_FORMAT),
+        date_end.strftime(cli.DATE_FORMAT), anomalies_detected)
 
 
 def main(args):
