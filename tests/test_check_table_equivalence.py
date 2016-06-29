@@ -72,17 +72,16 @@ class TableEquivalenceCheckerTest(unittest.TestCase):
         check_result = self.checker.check(constants.PROJECT_ID_NDT, START_TIME,
                                           END_TIME)
         self.assertFalse(check_result.success)
-        self.assertMultiLineEqual(
-            check_result.message,
-            ('Check failed: TABLE EQUIVALENCE\n'
-             'test_id values present in per-month table, but NOT present in '
-             'per-project table:\n'
-             '  mock_id_1\n'
-             '  mock_id_2\n'
-             'test_id values present in per-project table, but NOT present in '
-             'per-month table:\n'
-             '  mock_id_3\n'
-             'BigQuery SQL:\n' + formatting.indent(MOCK_QUERY)))
+        self.assertMultiLineEqual(check_result.message, (
+            'Check failed: TABLE EQUIVALENCE\n'
+            'test_id values present in per-month table, but NOT present in '
+            'per-project table:\n'
+            '  mock_id_1\n'
+            '  mock_id_2\n'
+            'test_id values present in per-project table, but NOT present in '
+            'per-month table:\n'
+            '  mock_id_3\n'
+            'BigQuery SQL:\n' + formatting.indent(MOCK_QUERY)))
 
     def test_check_fails_when_extra_ids_are_in_per_month_table_only(self):
         """If per-month table contains extra test_ids, check fails."""
@@ -94,14 +93,13 @@ class TableEquivalenceCheckerTest(unittest.TestCase):
         check_result = self.checker.check(constants.PROJECT_ID_NDT, START_TIME,
                                           END_TIME)
         self.assertFalse(check_result.success)
-        self.assertMultiLineEqual(
-            check_result.message,
-            ('Check failed: TABLE EQUIVALENCE\n'
-             'test_id values present in per-month table, but NOT present in '
-             'per-project table:\n'
-             '  mock_id_1\n'
-             '  mock_id_2\n'
-             'BigQuery SQL:\n' + formatting.indent(MOCK_QUERY)))
+        self.assertMultiLineEqual(check_result.message, (
+            'Check failed: TABLE EQUIVALENCE\n'
+            'test_id values present in per-month table, but NOT present in '
+            'per-project table:\n'
+            '  mock_id_1\n'
+            '  mock_id_2\n'
+            'BigQuery SQL:\n' + formatting.indent(MOCK_QUERY)))
 
     def test_check_fails_when_extra_ids_are_in_per_project_table_only(self):
         """If per-project table contains extra test_ids, check fails."""
@@ -112,13 +110,12 @@ class TableEquivalenceCheckerTest(unittest.TestCase):
         check_result = self.checker.check(constants.PROJECT_ID_NDT, START_TIME,
                                           END_TIME)
         self.assertFalse(check_result.success)
-        self.assertMultiLineEqual(
-            check_result.message,
-            ('Check failed: TABLE EQUIVALENCE\n'
-             'test_id values present in per-project table, but NOT present in '
-             'per-month table:\n'
-             '  mock_id_3\n'
-             'BigQuery SQL:\n' + formatting.indent(MOCK_QUERY)))
+        self.assertMultiLineEqual(check_result.message, (
+            'Check failed: TABLE EQUIVALENCE\n'
+            'test_id values present in per-project table, but NOT present in '
+            'per-month table:\n'
+            '  mock_id_3\n'
+            'BigQuery SQL:\n' + formatting.indent(MOCK_QUERY)))
 
     def test_check_trims_list_of_extra_ids_when_the_list_is_large(self):
         """When the check finds many extra test_ids, we should trim the list.
@@ -144,23 +141,22 @@ class TableEquivalenceCheckerTest(unittest.TestCase):
         check_result = self.checker.check(constants.PROJECT_ID_NDT, START_TIME,
                                           END_TIME)
         self.assertFalse(check_result.success)
-        self.assertMultiLineEqual(
-            check_result.message,
-            ('Check failed: TABLE EQUIVALENCE\n'
-             'test_id values present in per-project table, but NOT present in '
-             'per-month table:\n'
-             '  mock_id_00\n'
-             '  mock_id_01\n'
-             '  mock_id_02\n'
-             '  mock_id_03\n'
-             '  mock_id_04\n'
-             '  mock_id_05\n'
-             '  mock_id_06\n'
-             '  mock_id_07\n'
-             '  mock_id_08\n'
-             '  mock_id_09\n'
-             '  (95 additional or duplicate test_id values omitted)\n'
-             'BigQuery SQL:\n' + formatting.indent(MOCK_QUERY)))
+        self.assertMultiLineEqual(check_result.message, (
+            'Check failed: TABLE EQUIVALENCE\n'
+            'test_id values present in per-project table, but NOT present in '
+            'per-month table:\n'
+            '  mock_id_00\n'
+            '  mock_id_01\n'
+            '  mock_id_02\n'
+            '  mock_id_03\n'
+            '  mock_id_04\n'
+            '  mock_id_05\n'
+            '  mock_id_06\n'
+            '  mock_id_07\n'
+            '  mock_id_08\n'
+            '  mock_id_09\n'
+            '  (95 additional or duplicate test_id values omitted)\n'
+            'BigQuery SQL:\n' + formatting.indent(MOCK_QUERY)))
 
     def test_check_raises_exception_if_generator_factory_raises_exception(self):
         """Checker should not catch any exceptions from generator factory."""

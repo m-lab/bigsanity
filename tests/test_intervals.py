@@ -37,12 +37,11 @@ class IntervalsTest(unittest.TestCase):
 
     def test_date_limits_to_intervals_when_limit_is_exactly_three_intervals(
             self):
-        intervals_expected = [(datetime.datetime(2015, 1, 1),
-                               datetime.datetime(2015, 2, 1)),
-                              (datetime.datetime(2015, 2, 1),
-                               datetime.datetime(2015, 3, 1)),
-                              (datetime.datetime(2015, 3, 1),
-                               datetime.datetime(2015, 4, 1)),]
+        intervals_expected = [
+            (datetime.datetime(2015, 1, 1), datetime.datetime(2015, 2, 1)),
+            (datetime.datetime(2015, 2, 1), datetime.datetime(2015, 3, 1)),
+            (datetime.datetime(2015, 3, 1), datetime.datetime(2015, 4, 1)),
+        ]
         intervals_actual = intervals.date_limits_to_intervals(
             datetime.datetime(2015, 1, 1),
             datetime.datetime(2015, 4, 1),
@@ -52,10 +51,10 @@ class IntervalsTest(unittest.TestCase):
     def test_date_limits_to_intervals_when_limit_is_one_and_a_half_intervals(
             self):
         """Intervals should never extend past the end date."""
-        intervals_expected = [(datetime.datetime(2015, 1, 1),
-                               datetime.datetime(2015, 2, 1)),
-                              (datetime.datetime(2015, 2, 1),
-                               datetime.datetime(2015, 2, 16)),]
+        intervals_expected = [
+            (datetime.datetime(2015, 1, 1), datetime.datetime(2015, 2, 1)),
+            (datetime.datetime(2015, 2, 1), datetime.datetime(2015, 2, 16)),
+        ]
         intervals_actual = intervals.date_limits_to_intervals(
             datetime.datetime(2015, 1, 1),
             datetime.datetime(2015, 2, 16),

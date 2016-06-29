@@ -104,8 +104,8 @@ def per_project_table(project):
         constants.PROJECT_ID_NPAD: constants.PROJECT_NAME_NPAD,
         constants.PROJECT_ID_SIDESTREAM: constants.PROJECT_NAME_SIDESTREAM,
         constants.PROJECT_ID_PARIS_TRACEROUTE:
-            constants.PROJECT_NAME_PARIS_TRACEROUTE,
-    }  # yapf: disable
+        constants.PROJECT_NAME_PARIS_TRACEROUTE,
+    }
     try:
         project_name = project_id_to_name[project]
     except KeyError:

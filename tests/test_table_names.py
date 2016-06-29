@@ -60,9 +60,9 @@ class TableNamesTest(unittest.TestCase):
     def test_monthly_tables(self):
         """Generate monthly table names for valid date range."""
         self.assertSequenceEqual(
-            ('plx.google:m_lab.2009_02.all',
-             'plx.google:m_lab.2009_03.all'), table_names.monthly_tables(
-                 datetime.datetime(2009, 2, 11), datetime.datetime(2009, 3, 1)))
+            ('plx.google:m_lab.2009_02.all', 'plx.google:m_lab.2009_03.all'),
+            table_names.monthly_tables(
+                datetime.datetime(2009, 2, 11), datetime.datetime(2009, 3, 1)))
 
         # Rounding down to 2009-02-01 is okay even though M-Lab epoch is
         # 2009-02-11 because the 2009_02 table still exists.
